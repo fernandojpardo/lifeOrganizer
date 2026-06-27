@@ -83,31 +83,27 @@
             <!-- Savings Widget -->
             <div class="card" v-if="data.savings_summary?.length">
                 <div class="card-header">
-                    <h2 class="card-title">🎯 Savings Goals</h2>
-                    <span class="card-subtitle">
-                        {{ formatMoney(data.total_savings) }} / {{ formatMoney(data.total_savings_target) }}
-                        &nbsp;·&nbsp;
-                        {{ overallSavingsPct.toFixed(0) }}%
-                    </span>
+                    <div>
+                        <h2 class="card-title">🎯 Savings Goals</h2>
+                        <span class="card-subtitle">{{ formatMoney(data.total_savings) }} / {{ formatMoney(data.total_savings_target) }} · {{ overallSavingsPct.toFixed(0) }}%</span>
+                    </div>
                 </div>
                 <div class="savings-widget">
-                    <div class="savings-chart-wrap">
-                        <canvas ref="savingsCanvas" height="160"></canvas>
+                    <div class="savings-chart-wrap" :style="{ height: Math.max(120, data.savings_summary.length * 48) + 'px' }">
+                        <canvas ref="savingsCanvas"></canvas>
                     </div>
-                    <div class="savings-list">
-                        <div v-for="(g, i) in data.savings_summary" :key="g.id" class="savings-row">
-                            <div class="sav-info">
-                                <span class="sav-name">{{ g.name }}</span>
-                                <span class="sav-pct" :style="{ color: savingsColor(g.percentage, i) }">{{ g.percentage }}%</span>
-                            </div>
-                            <div class="sav-bar">
-                                <div class="sav-fill" :style="{ width: Math.min(g.percentage, 100) + '%', background: savingsColor(g.percentage, i) }"></div>
-                            </div>
-                            <div class="sav-amounts">
-                                <span>{{ formatMoney(g.current_amount) }}</span>
-                                <span class="sav-sep">/</span>
-                                <span>{{ formatMoney(g.target_amount) }}</span>
-                                <span v-if="g.target_date" class="sav-date">· {{ shortDate(g.target_date) }}</span>
+                    <div class="savings-legend">
+                        <div v-for="(g, i) in data.savings_summary" :key="g.id" class="sav-legend-row">
+                            <span class="sav-dot" :style="{ background: savingsColor(g.percentage, i) }"></span>
+                            <div class="sav-legend-body">
+                                <div class="sav-legend-top">
+                                    <span class="sav-legend-name">{{ g.name }}</span>
+                                    <span class="sav-legend-pct" :style="{ color: savingsColor(g.percentage, i) }">{{ g.percentage }}%</span>
+                                </div>
+                                <div class="sav-legend-bottom">
+                                    <span class="sav-legend-amounts">{{ formatMoney(g.current_amount) }} <span class="sav-sep">of</span> {{ formatMoney(g.target_amount) }}</span>
+                                    <span v-if="g.target_date" class="sav-date">· {{ shortDate(g.target_date) }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -296,33 +292,54 @@ const buildSavingsChart = () => {
 
     const goals = data.value.savings_summary;
     savingsChart = new Chart(savingsCanvas.value, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
             labels: goals.map(g => g.name),
             datasets: [
                 {
                     label: 'Saved',
-                    data: goals.map(g => g.current_amount),
+                    data: goals.map(g => Math.min(g.percentage, 100)),
                     backgroundColor: goals.map((g, i) => savingsColor(g.percentage, i)),
-                    borderWidth: 0,
+                    borderRadius: 4,
+                    borderSkipped: false,
                 },
                 {
                     label: 'Remaining',
-                    data: goals.map(g => Math.max(0, g.target_amount - g.current_amount)),
-                    backgroundColor: goals.map(() => 'rgba(0,0,0,0.06)'),
-                    borderWidth: 0,
+                    data: goals.map(g => Math.max(0, 100 - g.percentage)),
+                    backgroundColor: 'rgba(0,0,0,0.07)',
+                    borderRadius: 4,
+                    borderSkipped: false,
                 },
             ],
         },
         options: {
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '65%',
+            scales: {
+                x: {
+                    stacked: true,
+                    display: false,
+                    grid: { display: false },
+                    min: 0,
+                    max: 100,
+                },
+                y: {
+                    stacked: true,
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: { font: { size: 12 }, color: '#45474c' },
+                },
+            },
             plugins: {
-                legend: { position: 'right', labels: { boxWidth: 10, padding: 12, font: { size: 11 } } },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: ctx => ` ${ctx.dataset.label}: ${formatMoney(ctx.parsed)}`,
+                        label: ctx => {
+                            const g = goals[ctx.dataIndex];
+                            if (ctx.datasetIndex === 0) return ` Saved: ${formatMoney(g.current_amount)} (${g.percentage}%)`;
+                            return ` Remaining: ${formatMoney(Math.max(0, g.target_amount - g.current_amount))}`;
+                        },
                     },
                 },
             },
@@ -445,24 +462,18 @@ onMounted(load);
 .chart-wrap { padding: 1.25rem; height: 220px; position: relative; }
 
 /* ── Savings widget ──────────────────────────── */
-.savings-widget {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 1.25rem;
-    padding: 1.25rem;
-    align-items: start;
-}
-.savings-chart-wrap { height: 160px; position: relative; }
-.savings-list { display: flex; flex-direction: column; gap: 0.875rem; }
-.savings-row { display: flex; flex-direction: column; gap: 0.3rem; }
-.sav-info { display: flex; justify-content: space-between; align-items: center; }
-.sav-name { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
-.sav-pct  { font-size: 0.78rem; font-weight: 800; }
-.sav-bar  { height: 6px; background: var(--bg-surface); border-radius: 999px; overflow: hidden; }
-.sav-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
-.sav-amounts { font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 0.3rem; align-items: center; }
-.sav-sep  { color: var(--border-default); }
-.sav-date { font-style: italic; }
+.savings-widget { display: flex; flex-direction: column; gap: 0.75rem; padding: 1.25rem; }
+.savings-chart-wrap { position: relative; width: 100%; }
+.savings-legend { display: flex; flex-direction: column; gap: 0.5rem; }
+.sav-legend-row { display: flex; align-items: flex-start; gap: 0.6rem; }
+.sav-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 0.3rem; }
+.sav-legend-body { flex: 1; min-width: 0; }
+.sav-legend-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.1rem; }
+.sav-legend-name { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
+.sav-legend-pct  { font-size: 0.82rem; font-weight: 800; flex-shrink: 0; }
+.sav-legend-bottom { display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; }
+.sav-sep { opacity: 0.5; }
+.sav-date { color: var(--text-muted); }
 
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
 
@@ -611,8 +622,6 @@ onMounted(load);
     .hero-amount { font-size: 1.875rem; }
     .stat-row  { grid-template-columns: 1fr; }
     .two-col   { grid-template-columns: 1fr; }
-    .savings-widget { grid-template-columns: 1fr; }
-    .savings-chart-wrap { height: 180px; }
 }
 
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
