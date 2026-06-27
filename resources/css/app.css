@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+:root {
+  /* ── Color tokens ─────────────────────────── */
+  --color-primary:           #091426;
+  --color-primary-container: #1e293b;
+  --color-on-primary:        #ffffff;
+  --color-secondary:         #10b981;
+  --color-secondary-dark:    #006c49;
+  --color-on-secondary:      #ffffff;
+  --color-error:             #ba1a1a;
+  --color-success:           #10b981;
+  --color-warning:           #d97706;
+  --color-danger:            #ba1a1a;
+
+  /* ── Surfaces ─────────────────────────────── */
+  --bg-base:        #f7f9fb;
+  --bg-surface:     #f2f4f6;
+  --bg-elevated:    #ffffff;
+  --bg-card:        #f1f5f9;
+  --bg-card-hover:  #e6e8ea;
+
+  /* ── Borders ──────────────────────────────── */
+  --border-subtle:  #e2e8f0;
+  --border-default: #e2e8f0;
+  --border-bright:  #c5c6cd;
+
+  /* ── Text ─────────────────────────────────── */
+  --text-primary:   #191c1e;
+  --text-secondary: #45474c;
+  --text-muted:     #75777d;
+
+  /* ── Radius (design spec) ─────────────────── */
+  --radius-sm:   0.25rem;  /* 4px  */
+  --radius-md:   0.5rem;   /* 8px  — standard */
+  --radius-lg:   0.75rem;  /* 12px */
+  --radius-xl:   1.5rem;   /* 24px — modals / bottom sheets */
+  --radius-full: 9999px;
+
+  /* ── Elevation / Shadows ──────────────────── */
+  --shadow-sm: 0px 1px 3px rgba(30, 41, 59, 0.04);
+  --shadow-md: 0px 4px 12px rgba(30, 41, 59, 0.05);
+  --shadow-lg: 0px 8px 24px rgba(30, 41, 59, 0.12);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Select options */
+select option { background: #ffffff; color: var(--text-primary); }
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
